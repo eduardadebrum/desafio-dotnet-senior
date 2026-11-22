@@ -29,5 +29,20 @@ namespace NotaCarioca.Testes
         {
             Assert.AreEqual(900m, CalculoIss.CalcularBase(1000m, 100m));
         }
+
+        [TestMethod]
+        public void Iss_DeveArredondarMeioCentavo()
+        {
+            decimal baseCalculo = 10.50m;
+            decimal aliquota = 0.05m;
+
+            decimal resultado = CalculoIss.CalcularValorIss(
+                baseCalculo,
+                aliquota,
+                "N"
+            );
+
+            Assert.AreEqual(0.53m, resultado);
+        }
     }
 }
