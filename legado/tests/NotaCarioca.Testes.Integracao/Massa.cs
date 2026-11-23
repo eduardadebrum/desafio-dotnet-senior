@@ -105,12 +105,18 @@ namespace NotaCarioca.Testes.Integracao
             return sb.ToString();
         }
 
-        public static string Enviar(Prestador prestador, long numeroLote, IList<RpsLote> rps)
+        public static string RecepcionarLoteRps(Prestador prestador, long numeroLote, IList<RpsLote> rps)
         {
             string resposta = new RecepcaoLoteServico().Recepcionar(LoteXml(prestador, numeroLote, rps));
             string protocolo = Regex.Match(resposta, "<Protocolo>(NC[0-9]{14})</Protocolo>").Groups[1].Value;
             if (protocolo.Length == 0)
                 throw new InvalidOperationException("Lote recusado: " + resposta);
+            return protocolo;
+        }
+
+        public static string Enviar(Prestador prestador, long numeroLote, IList<RpsLote> rps)
+        {
+            string protocolo = RecepcionarLoteRps(prestador, numeroLote, rps);
             new ProcessadorLoteRps().ProcessarPendentes();
             return protocolo;
         }
