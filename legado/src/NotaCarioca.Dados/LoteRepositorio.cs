@@ -61,6 +61,13 @@ namespace NotaCarioca.Dados
                 OracleHelper.P("prot", protocolo));
         }
 
+        public bool IniciarProcessamento(string protocolo)
+        {
+            return OracleHelper.ExecuteNonQuery(
+                "UPDATE LOTES_RPS SET SITUACAO = 2 WHERE PROTOCOLO = :prot AND SITUACAO = 1",
+                OracleHelper.P("prot", protocolo)) == 1;
+        }
+
         public void AtualizarSituacao(string protocolo, int situacao)
         {
             string sql = "UPDATE LOTES_RPS SET SITUACAO = :sit WHERE PROTOCOLO = :prot";

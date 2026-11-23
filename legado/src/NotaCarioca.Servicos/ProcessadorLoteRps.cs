@@ -53,8 +53,9 @@ namespace NotaCarioca.Servicos
         private void ProcessarLote(string protocolo)
         {
             DateTime inicio = DateTime.Now;
+            if (!_lotes.IniciarProcessamento(protocolo))
+                return;
             string xml = _lotes.ObterXml(protocolo);
-            _lotes.AtualizarSituacao(protocolo, 2);
 
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);
