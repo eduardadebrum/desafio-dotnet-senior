@@ -121,6 +121,14 @@ namespace NotaCarioca.Testes.Integracao
             return protocolo;
         }
 
+        public static string PedidoCancelamento(Prestador prestador, long numero)
+        {
+            return "<CancelarNfseEnvio><Pedido><InfPedidoCancelamento><IdentificacaoNfse><Numero>" + numero + "</Numero><Cnpj>" +
+                   prestador.Documento + "</Cnpj><InscricaoMunicipal>" + prestador.InscricaoMunicipal +
+                   "</InscricaoMunicipal></IdentificacaoNfse><CodigoCancelamento>1</CodigoCancelamento>" +
+                   "<Motivo>Servico nao prestado</Motivo></InfPedidoCancelamento></Pedido></CancelarNfseEnvio>";
+        }
+
         public static string Periodo(DateTime ini, DateTime fim)
         {
             return "<PeriodoEmissao><DataInicial>" + ini.ToString("yyyy-MM-dd", Inv) + "</DataInicial><DataFinal>" +
