@@ -155,6 +155,37 @@ namespace NotaCarioca.Testes.Integracao
             StringAssert.Contains(Consultas.ErrosLote(protocoloReenvio), "<Codigo>E060</Codigo>");
         }
 
+        [TestMethod]
+        public void Guia_RecalculoSimultaneoDoMesmoPrestador()
+        {
+            Prestador prestador = Massa.CriarPrestador();
+            DateTime competencia = Competencia.PrimeiroDia(DateTime.Today);
+            List<Exception> erros = new List<Exception>();
+
+            using (OracleConnection conexaoNota = OracleHelper.AbrirConexao())
+            using (OracleTransaction nota = conexaoNota.BeginTransaction())
+            {
+                EmitirNota(conexaoNota, nota, prestador.Id, 1);
+                nota.Commit();
+            }
+
+            using (OracleConnection conexaoPrimeiroRecalculo = OracleHelper.AbrirConexao())
+            using (OracleTransaction primeiroRecalculo = conexaoPrimeiroRecalculo.BeginTransaction())
+            {
+                OracleHelper.ExecuteNonQuery(conexaoPrimeiroRecalculo, primeiroRecalculo,
+                    "BEGIN PKG_GUIA.recalcular_guia(:prest, :comp); END;",
+                    OracleHelper.P("prest", prestador.Id),
+                    OracleHelper.P("comp", OracleDbType.Date, competencia));
+
+                List<Thread> segundoRecalculo = Iniciar(1, erros, () => new GuiaRepositorio().Recalcular(prestador.Id, competencia));
+                AguardarBloqueadas(conexaoPrimeiroRecalculo, 1);
+                primeiroRecalculo.Commit();
+                Aguardar(segundoRecalculo, erros);
+            }
+
+            Assert.AreEqual(20.00m, Consultas.ValorGuia(prestador.Id, competencia));
+        }
+
         private static List<RpsLote> Lote(int primeiroNumero, int quantidade)
         {
             List<RpsLote> lote = new List<RpsLote>();
