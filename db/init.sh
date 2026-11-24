@@ -8,4 +8,10 @@ for f in 01_schema 02_pkg_guia 03_pkg_nfse 04_triggers 05_seed_base 06_seed_volu
     echo "[init] $f.sql"
     sqlplus -s -L "$CONN" @/opt/nfse/db/$f.sql
 done
+for f in /opt/nfse/db/migrations/[0-9]*.sql; do
+    [ -e "$f" ] || continue
+    case "$f" in *_rollback.sql) continue ;; esac
+    echo "[init] migrations/$(basename "$f")"
+    sqlplus -s -L "$CONN" @"$f"
+done
 echo "[init] concluido em $(( $(date +%s) - INICIO ))s"
