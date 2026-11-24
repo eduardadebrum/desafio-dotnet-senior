@@ -40,9 +40,9 @@ namespace NotaCarioca.Testes.Integracao
             await _oracle.StartAsync();
 
             ExecResult grant = await _oracle.ExecAsync(new[] { "bash", "-c",
-                "printf 'ALTER SESSION SET CONTAINER=FREEPDB1;\\nWHENEVER SQLERROR EXIT FAILURE\\nGRANT SELECT ON V_$SESSION TO NFSE_OWNER;\\n' | sqlplus -s / as sysdba" });
+                "printf 'ALTER SESSION SET CONTAINER=FREEPDB1;\\nWHENEVER SQLERROR EXIT FAILURE\\nGRANT SELECT ON V_$SESSION TO NFSE_OWNER;\\nGRANT SELECT ON V_$SQL TO NFSE_OWNER;\\nGRANT SELECT ON V_$SQL_PLAN TO NFSE_OWNER;\\n' | sqlplus -s / as sysdba" });
             if (grant.ExitCode != 0)
-                throw new InvalidOperationException("Falha no grant de V$SESSION: " + grant.Stdout + grant.Stderr);
+                throw new InvalidOperationException("Falha nos grants das visoes V$: " + grant.Stdout + grant.Stderr);
 
             OracleHelper.ConnectionString = string.Format(
                 "User Id=NFSE_OWNER;Password=nfse_dev_123;Data Source={0}:{1}/FREEPDB1;Min Pool Size=2;Connection Timeout=30",

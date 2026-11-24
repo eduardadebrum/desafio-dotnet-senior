@@ -77,6 +77,16 @@ namespace NotaCarioca.Testes.Integracao
                 OracleHelper.P("prest", prestadorId)));
         }
 
+        public static string PlanoServicoTomado()
+        {
+            return Convert.ToString(OracleHelper.ExecuteScalar(
+                "SELECT LISTAGG(p.OPERATION || ' ' || p.OPTIONS || ' ' || p.OBJECT_NAME || ' ' || p.FILTER_PREDICATES, CHR(10)) " +
+                "WITHIN GROUP (ORDER BY p.ID) FROM V$SQL_PLAN p " +
+                "WHERE (p.SQL_ID, p.CHILD_NUMBER) = (SELECT SQL_ID, CHILD_NUMBER FROM V$SQL WHERE SQL_FULLTEXT LIKE :texto " +
+                "ORDER BY LAST_ACTIVE_TIME DESC FETCH FIRST 1 ROWS ONLY)",
+                OracleHelper.P("texto", "%WHERE n.TOMADOR_DOCUMENTO = :doc%")));
+        }
+
         public static int SessoesBloqueadasPor(int sid)
         {
             return Convert.ToInt32(OracleHelper.ExecuteScalar(
