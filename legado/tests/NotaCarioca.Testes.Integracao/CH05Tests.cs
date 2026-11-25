@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NotaCarioca.Dados;
 using NotaCarioca.Dominio;
@@ -17,6 +19,7 @@ namespace NotaCarioca.Testes.Integracao
 
         private static readonly DateTime CompetenciaAtual = Competencia.PrimeiroDia(DateTime.Today);
         private static readonly DateTime CompetenciaAnterior = CompetenciaAtual.AddMonths(-1);
+        private static readonly TimeSpan Limite = TimeSpan.FromSeconds(30);
 
         [TestMethod]
         public void Cancelamento_GuiaDescontaNotaCancelada()
@@ -79,6 +82,40 @@ namespace NotaCarioca.Testes.Integracao
             }
 
             Assert.AreEqual(30.00m, Consultas.ValorGuia(prestador.Id, CompetenciaAtual));
+        }
+
+        [TestMethod]
+        public void Cancelamento_RecalculoSimultaneoNaoVoltaACobrarNotaCancelada()
+        {
+            Prestador prestador = EmitirNotas(CompetenciaAtual, 1000m, 500m);
+
+            using (OracleConnection conexao = OracleHelper.AbrirConexao())
+            using (OracleTransaction cancelamento = conexao.BeginTransaction())
+            {
+                OracleHelper.ExecuteNonQuery(conexao, cancelamento,
+                    "UPDATE NFSE SET SITUACAO = 'C', DT_CANCELAMENTO = SYSDATE WHERE PRESTADOR_ID = :prest AND NUMERO = 1",
+                    OracleHelper.P("prest", prestador.Id));
+
+                Task recalculo = Task.Run(() => new GuiaRepositorio().Recalcular(prestador.Id, CompetenciaAtual));
+                AguardarBloqueada(conexao);
+                cancelamento.Commit();
+                Assert.IsTrue(recalculo.Wait(Limite), "recalculo nao terminou");
+            }
+
+            Assert.AreEqual(10.00m, Consultas.ValorGuia(prestador.Id, CompetenciaAtual));
+        }
+
+        private static void AguardarBloqueada(OracleConnection donaDaTrava)
+        {
+            int sid = Convert.ToInt32(OracleHelper.ExecuteScalar(donaDaTrava, null,
+                "SELECT SYS_CONTEXT('USERENV', 'SID') FROM DUAL"));
+            DateTime limite = DateTime.Now + Limite;
+            while (Consultas.SessoesBloqueadasPor(sid) < 1)
+            {
+                if (DateTime.Now > limite)
+                    Assert.Fail("concorrencia nao exercitada: o recalculo nao ficou bloqueado pelo cancelamento");
+                Thread.Sleep(50);
+            }
         }
 
         private static Prestador EmitirNotas(DateTime competencia, params decimal[] valores)
