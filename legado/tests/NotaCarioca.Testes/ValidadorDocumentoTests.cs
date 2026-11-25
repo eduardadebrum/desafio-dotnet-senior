@@ -116,5 +116,18 @@ namespace NotaCarioca.Testes
             Assert.IsFalse(ValidadorDocumento.ValidarCpfOuCnpj(""));
             Assert.IsFalse(ValidadorDocumento.ValidarCpfOuCnpj(null));
         }
+
+        [TestMethod]
+        public void Normalizar_NumericosIguaisASomenteDigitos()
+        {
+            string[] documentos =
+            {
+                "11222333000181", "11.222.333/0001-81", "01234567000195", " 01.234.567/0001-95 ", "11222333000182",
+                "52998224725", "529.982.247-25", "01234567890", "52998224726", "123", "", null, "11222333000181abc", "CPF 52998224725"
+            };
+
+            foreach (string documento in documentos)
+                Assert.AreEqual(ValidadorDocumento.SomenteDigitos(documento), ValidadorDocumento.Normalizar(documento), documento);
+        }
     }
 }

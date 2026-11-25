@@ -22,17 +22,20 @@ namespace NotaCarioca.Dados
         {
             long id = Convert.ToInt64(OracleHelper.ExecuteScalar(conn, tx, "SELECT SEQ_RPS.NEXTVAL FROM DUAL"));
 
-            string digitos = ValidadorDocumento.SomenteDigitos(tomadorDoc);
+            string documento = ValidadorDocumento.Normalizar(tomadorDoc);
             object cnpj = DBNull.Value;
             object cpf = DBNull.Value;
-            if (digitos.Length == 14)
-                cnpj = ValidadorDocumento.ParaNumero(tomadorDoc);
-            else if (digitos.Length == 11)
-                cpf = ValidadorDocumento.ParaNumero(tomadorDoc);
+            object cnpjAlfa = DBNull.Value;
+            if (ValidadorDocumento.TemLetra(documento))
+                cnpjAlfa = documento;
+            else if (documento.Length == 14)
+                cnpj = ValidadorDocumento.ParaNumero(documento);
+            else if (documento.Length == 11)
+                cpf = ValidadorDocumento.ParaNumero(documento);
 
             string sql = "INSERT INTO RPS (ID, PRESTADOR_ID, NUMERO, SERIE, TIPO, DT_EMISSAO, PROTOCOLO, " +
-                         "TOMADOR_CNPJ, TOMADOR_CPF, TOMADOR_RAZAO) " +
-                         "VALUES (:id, :prest, :num, :serie, :tipo, :dt, :prot, :cnpj, :cpf, :razao)";
+                         "TOMADOR_CNPJ, TOMADOR_CPF, TOMADOR_CNPJ_ALFA, TOMADOR_RAZAO) " +
+                         "VALUES (:id, :prest, :num, :serie, :tipo, :dt, :prot, :cnpj, :cpf, :cnpjalfa, :razao)";
             OracleHelper.ExecuteNonQuery(conn, tx, sql,
                 OracleHelper.P("id", id),
                 OracleHelper.P("prest", prestadorId),
@@ -43,6 +46,7 @@ namespace NotaCarioca.Dados
                 OracleHelper.P("prot", protocolo),
                 OracleHelper.P("cnpj", OracleDbType.Int64, cnpj),
                 OracleHelper.P("cpf", OracleDbType.Int64, cpf),
+                OracleHelper.P("cnpjalfa", OracleDbType.Varchar2, cnpjAlfa),
                 OracleHelper.P("razao", tomadorRazao));
             return id;
         }
