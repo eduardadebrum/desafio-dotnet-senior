@@ -17,11 +17,16 @@ namespace NotaCarioca.Testes.Integracao
 
         public static Prestador CriarPrestador()
         {
+            return CriarPrestador(null);
+        }
+
+        public static Prestador CriarPrestador(string documento)
+        {
             long id = Convert.ToInt64(OracleHelper.ExecuteScalar("SELECT SEQ_CONTRIBUINTES.NEXTVAL FROM DUAL"));
             Prestador p = new Prestador();
             p.Id = id;
             p.InscricaoMunicipal = "9" + (id % 10000000).ToString("D7", Inv);
-            p.Documento = Cnpj(id);
+            p.Documento = documento ?? Cnpj(id);
             p.RazaoSocial = "PRESTADORA TESTE " + id;
             p.Regime = "N";
             p.Ativo = true;
